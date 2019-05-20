@@ -20,12 +20,30 @@ use std::fmt;
 use std::io;
 
 // PositiveNonzeroInteger is a struct defined below the tests.
-fn read_and_validate(b: &mut io::BufRead) -> Result<PositiveNonzeroInteger, ???> {
+fn read_and_validate(b: &mut io::BufRead) -> Result<PositiveNonzeroInteger, Box<error::Error>> {
     let mut line = String::new();
-    b.read_line(&mut line);
-    let num: i64 = line.trim().parse();
-    let answer = PositiveNonzeroInteger::new(num);
-    answer
+    b.read_line(&mut line)?;
+    // let num: i64 = line.trim().parse()?;
+    // let answer = PositiveNonzeroInteger::new(num)?;
+    // Ok(answer)
+
+    match line.trim().parse() {
+        Ok(num) => {
+            match PositiveNonzeroInteger::new(num) {
+                Ok(answer) => Ok(answer),
+                Err(e) => Err(Box::new(e))
+            }
+        },
+        Err(e) => Err(Box::new(e))
+        /* IMPORTANT NOTE
+        * IF you have observed properly, ? returns a "Boxed Error" so we changed the type to "Box".
+        * Although if we use match statement we can just set it to "error::Error", right? No, we
+        * can't do that because we return different types of error. I know that error::Error
+        * includes all the classes of errors but it doesn't specify the exact size at compile time.
+        * This is the reason why you have to "Box" it. "Box-ing" is basically storing in heap. In
+        * this case RUST compiler will not complain because the variables are stored in heap.
+        */
+    }
 }
 
 // This is a test helper function that turns a &str into a BufReader.
